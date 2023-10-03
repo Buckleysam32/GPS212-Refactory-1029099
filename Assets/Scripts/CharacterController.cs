@@ -3,6 +3,113 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
+/// <summary>
+/// State Class.
+/// </summary>
+public class State
+{
+    public StateManager manager;
+    public virtual void EnterState() { }
+    public virtual void ExitState() { }
+    public virtual void Update() { }
+}
+
+/// <summary>
+/// State Manager Class.
+/// </summary>
+public class StateManager 
+{
+    Dictionary<string, State> states = new Dictionary<string, State>();
+    State currentState = null;
+    public string stateName = "";
+    public CharacterController characterController;
+
+    public void Start()
+    {
+        states.Add("Idle", new StateIdle());
+        states.Add("Roaming", new StateRoaming());
+        states.Add("Waving", new StateWaving());
+        states.Add("Playing", new StatePlaying());
+        states.Add("Fleeing", new StateFleeing());
+    }
+
+    public void Update()
+    {
+        if (currentState != null)
+        {
+            currentState.Update();
+        }
+    }
+
+    public void ChangeState(string state)
+    {
+        stateName = state;
+        State previousState = currentState;
+        currentState = states[state];
+        if (previousState != currentState)
+        {
+            previousState?.ExitState();
+            currentState?.EnterState();
+        }
+    }
+
+}
+/// <summary>
+/// Character Idle State.
+/// </summary>
+public class StateIdle : State
+{
+    public StateIdle() { }
+
+    public override void EnterState() { }
+    public override void ExitState() { }
+    public override void Update() { }
+}
+/// <summary>
+/// Character Roaming State.
+/// </summary>
+public class StateRoaming : State
+{
+    CharacterController characterController;
+    public StateRoaming() { }
+    public override void EnterState() { }
+    public override void ExitState() { }
+    public override void Update()
+    {
+        
+    }
+}
+/// <summary>
+/// Character Waving State.
+/// </summary>
+public class StateWaving : State
+{
+    public StateWaving() { }
+    public override void EnterState() { }
+    public override void ExitState() { }
+    public override void Update() { }
+}
+/// <summary>
+/// Character Playing State.
+/// </summary>
+public class StatePlaying : State
+{
+    public StatePlaying() { }
+    public override void EnterState() { }
+    public override void ExitState() { }
+    public override void Update() { }
+}
+/// <summary>
+/// Character Fleeing State.
+/// </summary>
+public class StateFleeing : State
+{
+    public StateFleeing() { }
+    public override void EnterState() { }
+    public override void ExitState() { }
+    public override void Update() { }
+}
+
 public class CharacterController : MonoBehaviour
 {
 
@@ -13,9 +120,9 @@ public class CharacterController : MonoBehaviour
 
     public CharacterStates currentCharacterState; // The current state that our character is in.
 
-  
- 
 
+
+    public StateManager stateManager = new StateManager(); // Reference to state manager.
     public GameManager gameManager; // Reference to our game manager.
     public Rigidbody rigidBody; // Reference to our rigidbody.
 
@@ -81,6 +188,8 @@ public class CharacterController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        stateManager.Start();
+        stateManager.characterController = this;
         CurrentTargetPosition = gameManager.ReturnRandomPositionOnField(); // Get a random starting position.
         allCharactersInScene = FindObjectsOfType<CharacterController>(); // Find the references to all characters in our scene.
         currentCharacterState = CharacterStates.Roaming; // Set the character by default to start roaming.
@@ -91,12 +200,7 @@ public class CharacterController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        LookAtTargetPosition(); // Always look towards the position we are aiming for.
-        HandleRoamingState(); // Call our roaming state function.
-        HandleIdleState(); // Call our idle state function.
-        HandleWavingState(); // Call our waving state function.
-        HandleFleeingState(); // Call our fleeing state function.
-        HandlePlayingState(); // Call our playing state function.
+        stateManager.Update();
     }
 
     /// <summary>
