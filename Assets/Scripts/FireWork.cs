@@ -4,17 +4,17 @@ using UnityEngine;
 
 public class FireWork : MonoBehaviour
 {
-    public AudioClip fireWorkSound; // the firework sound
-    public AudioSource audioSource; // reference to our audiosource.
-    public int numberOfFireworks = 3; // the number of fireworks that will be spawned
-    public float initialDelay = 2; // an initial delay before the first firework is spawned.
-    public float timeBetweenFireWorks = 0.5f;// half a second between each firework
+    public AudioClip fireWorkSound; // The firework sound.
+    public AudioSource audioSource; // Reference to our audiosource.
+    public int numberOfFireworks = 3; // The number of fireworks that will be spawned.
+    public float initialDelay = 2; // An initial delay before the first firework is spawned.
+    public float timeBetweenFireWorks = 0.5f; // Half a second between each firework.
 
 
-    // Start is called before the first frame update
+    // Start is called before the first frame update.
     void Start()
     {
-        StartCoroutine(PlayFireworks()); // start our coroutine up here.
+        StartCoroutine(PlayFireworks()); // Start our coroutine up here.
     }
 
     /// <summary>
@@ -24,11 +24,11 @@ public class FireWork : MonoBehaviour
     /// <returns></returns>
     IEnumerator PlayFireworks()
     {
-        yield return new WaitForSeconds(initialDelay); // wait a couple of seconds before continuing with our code.
+        yield return new WaitForSeconds(initialDelay); // Wait a couple of seconds before continuing with our code.
         for(int i =0; i<numberOfFireworks; i++)
         {
-            audioSource.PlayOneShot(fireWorkSound); // play our fire works sound once.
-            yield return new WaitForSeconds(timeBetweenFireWorks); // now wait before before we iterate to the next part of the for loop.
+            audioSource.PlayOneShot(fireWorkSound); // Play the fireworks sound once.
+            yield return new WaitForSeconds(timeBetweenFireWorks); // Now wait before before we iterate to the next part of the for loop.
         }
 
         yield return null;

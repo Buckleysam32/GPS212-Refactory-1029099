@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class RespawnZone : MonoBehaviour
 {
-    public GameManager gameManager; // reference to our game manager
+    public GameManager gameManager; // Reference to our game manager.
 
     // Start is called before the first frame update
     void Start()
@@ -18,13 +18,14 @@ public class RespawnZone : MonoBehaviour
         
     }
 
+    // Called when object collides with a trigger.
     private void OnTriggerEnter(Collider other)
     {
-        other.transform.position = gameManager.ReturnRandomPositionOnField(); // grab a random position in the world and move the object back there.
-        if(other.GetComponent<Rigidbody>()) // check to see if the object falling through has a rigidbody, if it does continue
+        other.transform.position = gameManager.ReturnRandomPositionOnField(); // Grab a random position in the world and move the object back there.
+        if(other.GetComponent<Rigidbody>()) // Check to see if the object falling through has a rigidbody, if it does continue.
         {
-            other.GetComponent<Rigidbody>().velocity = Vector3.zero; // reset our veloicty to 0
-            other.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;// reset our velocity to zero
+            other.GetComponent<Rigidbody>().velocity = Vector3.zero; // Reset our veloicty to 0.
+            other.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;// Reset our velocity to zero.
         }
     }
 

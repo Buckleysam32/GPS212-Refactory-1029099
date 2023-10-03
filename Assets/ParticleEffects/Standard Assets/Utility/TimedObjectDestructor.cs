@@ -5,23 +5,25 @@ namespace UnityStandardAssets.Utility
 {
     public class TimedObjectDestructor : MonoBehaviour
     {
-        [SerializeField] private float m_TimeOut = 1.0f;
-        [SerializeField] private bool m_DetachChildren = false;
+        [SerializeField] private float timeOut = 1.0f;
+        [SerializeField] private bool detachChildren = false;
 
-
+        // Called when game starts.
         private void Awake()
         {
-            Invoke("DestroyNow", m_TimeOut);
+            Invoke("DestroyNow", timeOut);
         }
 
-
+        /// <summary>
+        /// A function that detaches all children and destroys the game object.
+        /// </summary>
         private void DestroyNow()
         {
-            if (m_DetachChildren)
+            if (detachChildren)
             {
                 transform.DetachChildren();
             }
-            DestroyObject(gameObject);
+            Destroy(gameObject);
         }
     }
 }

@@ -5,10 +5,10 @@ using UnityEngine;
 public class AnimationHandler : MonoBehaviour
 {
 
-    public Animator animator; // a reference to our animator compoenent
+    public Animator animator; // A reference to our animator compoenent.
 
-    public enum AnimationState {Idle, Walking,Running,Passing,Waving} // the different states of our animations.
-    public AnimationState currentAnimationState; // the current state our animator is in.
+    public enum AnimationState {Idle, Walking,Running,Passing,Waving} // The different states of our animations.
+    public AnimationState currentAnimationState; // The current state our animator is in.
 
     /// <summary>
     /// handles updating the animation state of our character.
@@ -21,7 +21,7 @@ public class AnimationHandler : MonoBehaviour
         }
         set
         {
-            currentAnimationState = value; // set our animation state to the value;
+            currentAnimationState = value; // Set our animation state to the value.
 
             if(animator != null)
             {
@@ -44,38 +44,39 @@ public class AnimationHandler : MonoBehaviour
         {
             case AnimationState.Idle:
                 {
-                    // reset our animator back to idle.
+                    // Reset our animator back to idle.
                     ResetToIdle();
                     break;
                 }
             case AnimationState.Passing:
                 {
                     ResetToIdle();
-                    // set our animator to the passing animation
+                    // Set our animator to the passing animation.
                     animator.SetBool("Passing", true);
                     break;;
                 }
             case AnimationState.Running:
                 {
                     ResetToIdle();
-                    //set our animator to the running animation
+                    // Set our animator to the running animation.
                     animator.SetBool("Running", true);
                     break;
                 }
             case AnimationState.Walking:
                 {
                     ResetToIdle();
-                    //set our aniumator to the walking animation
+                    // Set our animator to the walking animation.
                     animator.SetBool("Walking", true);
                     break;
                 }
             case AnimationState.Waving:
                 {
                     ResetToIdle();
-                    // set ouyr animator to the waving animation
+                    // Set our animator to the waving animation.
                     animator.SetBool("Wave", true);
                     break;
                 }
+
         }
     }
 
@@ -85,6 +86,7 @@ public class AnimationHandler : MonoBehaviour
     /// </summary>
     private void ResetToIdle()
     {
+        // Set all animator bools execpt idle to false.
         animator.SetBool("Passing", false);
         animator.SetBool("Running", false);
         animator.SetBool("Wave", false);
