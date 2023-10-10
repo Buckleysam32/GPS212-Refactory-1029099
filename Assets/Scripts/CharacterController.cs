@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static CharacterController;
 
 /// <summary>
 /// State Class.
@@ -20,17 +21,17 @@ public class State
 public class StateManager 
 {
     Dictionary<string, State> states = new Dictionary<string, State>();
-    State currentState = null;
+    public State currentState = null;
     public string stateName = "";
     public CharacterController characterController;
 
     public void Start()
     {
-        states.Add("Idle", new StateIdle());
-        states.Add("Roaming", new StateRoaming());
-        states.Add("Waving", new StateWaving());
-        states.Add("Playing", new StatePlaying());
-        states.Add("Fleeing", new StateFleeing());
+        states.Add("Idle", new StateIdle(this));
+        states.Add("Roaming", new StateRoaming(this));
+        states.Add("Waving", new StateWaving(this));
+        states.Add("Playing", new StatePlaying(this));
+        states.Add("Fleeing", new StateFleeing(this));
     }
 
     public void Update()
@@ -58,25 +59,89 @@ public class StateManager
 /// Character Idle State.
 /// </summary>
 public class StateIdle : State
-{
-    public StateIdle() { }
+{ 
+    public StateIdle(StateManager sm) { manager = sm; }
 
     public override void EnterState() { }
     public override void ExitState() { }
-    public override void Update() { }
+    public override void Update() 
+    { 
+        if(Time.time > manager.characterController.currentIdleWaitTime)
+        {
+            manager.characterController.currentTargetPosition = manager.characterController.gameManager.ReturnRandomPositionOnField();
+            manager.ChangeState("Roaming");
+        }
+
+        if (manager.characterController.animationHandler.CurrentState != AnimationHandler.AnimationState.Idle)
+        {
+            manager.characterController.animationHandler.CurrentState = AnimationHandler.AnimationState.Idle; // Set our animation to idle animation.
+        } 
+
+    }
 }
 /// <summary>
 /// Character Roaming State.
 /// </summary>
 public class StateRoaming : State
 {
-    CharacterController characterController;
-    public StateRoaming() { }
+    public StateRoaming(StateManager sm) { manager = sm; }
     public override void EnterState() { }
     public override void ExitState() { }
     public override void Update()
     {
-        
+        float distanceToTarget = 0;
+
+        if (manager.characterController.currentSoccerBall != null)
+        {
+            distanceToTarget = manager.characterController.soccerBallInteractDistance;
+        }
+        else
+        {
+            distanceToTarget = manager.characterController.minDistanceToTarget;
+        }
+
+        if (manager.stateName == "Roaming" && Vector3.Distance(manager.characterController.transform.position, manager.characterController.CurrentTargetPosition) > distanceToTarget)
+        {
+            if (manager.characterController.currentSoccerBall != null)
+            {
+                if (manager.characterController.animationHandler.CurrentState != AnimationHandler.AnimationState.Running)
+                {
+                    manager.characterController.animationHandler.CurrentState = AnimationHandler.AnimationState.Running;
+                }
+
+                manager.characterController.CurrentTargetPosition = manager.characterController.currentSoccerBall.position;
+                Vector3 targetPosition = new Vector3(manager.characterController.CurrentTargetPosition.x, manager.characterController.transform.position.y, manager.characterController.CurrentTargetPosition.z); 
+                Vector3 nextMovePosition = Vector3.MoveTowards(manager.characterController.transform.position, targetPosition, manager.characterController.moveSpeed * Time.deltaTime * 1.5f); 
+                manager.characterController.rigidBody.MovePosition(nextMovePosition);
+                manager.characterController.currentIdleWaitTime = Time.time + manager.characterController.idleTime;
+            }
+            else
+            {
+                if (manager.characterController.animationHandler.CurrentState != AnimationHandler.AnimationState.Walking)
+                {
+                    manager.characterController.animationHandler.CurrentState = AnimationHandler.AnimationState.Walking; 
+                }
+
+                Vector3 targetPosition = new Vector3(manager.characterController.CurrentTargetPosition.x, manager.characterController.transform.position.y, manager.characterController.CurrentTargetPosition.z); // The positon we want to move towards.
+                Vector3 nextMovePosition = Vector3.MoveTowards(manager.characterController.transform.position, targetPosition, manager.characterController.moveSpeed * Time.deltaTime); // The amount we should move towards that position.
+                manager.characterController.rigidBody.MovePosition(nextMovePosition);
+                manager.characterController.currentIdleWaitTime = Time.time + manager.characterController.idleTime;
+            }
+
+        }
+        else if (manager.stateName == "Roaming")
+        {
+            if(manager.characterController.currentSoccerBall != null)
+            {
+                manager.ChangeState("Playing");
+                manager.characterController.currentTimeTillPassingAnimationPlays = Time.time + manager.characterController.passingAnimationDelay;
+            }
+            else
+            {
+                manager.ChangeState("Idle");
+            }
+        }
+
     }
 }
 /// <summary>
@@ -84,86 +149,146 @@ public class StateRoaming : State
 /// </summary>
 public class StateWaving : State
 {
-    public StateWaving() { }
+    public StateWaving(StateManager sm) { manager = sm; }
     public override void EnterState() { }
     public override void ExitState() { }
-    public override void Update() { }
+    public override void Update()
+    { 
+        if(manager.characterController.ReturnCharacterTransformToWaveAt() != null & manager.stateName != "Waving" && Time.time > manager.characterController.currentTimeBetweenWaves && manager.stateName != "Fleeing" && manager.characterController.currentSoccerBall == null)
+        {
+            manager.ChangeState("Waving");
+            manager.characterController.currentWaveTime = Time.time + manager.characterController.waveTime;
+            manager.characterController.CurrentTargetPosition = manager.characterController.ReturnCharacterTransformToWaveAt().position;
+            if(manager.characterController.animationHandler.CurrentState != AnimationHandler.AnimationState.Waving)
+            {
+                manager.characterController.animationHandler.currentAnimationState = AnimationHandler.AnimationState.Waving;
+            }
+        }
+        if (manager.stateName == "Waving" && Time.time > manager.characterController.currentWaveTime)
+        {
+            manager.characterController.CurrentTargetPosition = manager.characterController.previousTargetPosition;
+            manager.characterController.currentTimeBetweenWaves = Time.time + manager.characterController.timeBetweenWaves;
+            manager.ChangeState("Roaming");
+        }
+    
+    }
 }
 /// <summary>
 /// Character Playing State.
 /// </summary>
 public class StatePlaying : State
 {
-    public StatePlaying() { }
+    public StatePlaying(StateManager sm) { manager = sm; }
     public override void EnterState() { }
     public override void ExitState() { }
-    public override void Update() { }
+    public override void Update()
+    { 
+        if(manager.stateName == "Playing")
+        {
+            if(manager.characterController.animationHandler.CurrentState != AnimationHandler.AnimationState.Passing)
+            {
+                manager.characterController.animationHandler.CurrentState = AnimationHandler.AnimationState.Passing;
+            }
+
+            if(Time.time > manager.characterController.currentTimeTillPassingAnimationPlays)
+            {
+                manager.characterController.KickSoccerBall();
+                manager.characterController.CurrentTargetPosition = manager.characterController.currentSoccerBall.position;
+                manager.ChangeState("Roaming");
+            }
+        }
+    
+    }
 }
 /// <summary>
 /// Character Fleeing State.
 /// </summary>
 public class StateFleeing : State
 {
-    public StateFleeing() { }
+    public StateFleeing(StateManager sm) { manager = sm; }
     public override void EnterState() { }
     public override void ExitState() { }
-    public override void Update() { }
+    public override void Update()
+    { 
+        if(manager.stateName != "Fleeing" && manager.characterController.gameManager.IsPlayerToCloseToCharacter(manager.characterController.transform, manager.characterController.distanceThresholdOfPlayer))
+        {
+            manager.ChangeState("Fleeing");
+            manager.characterController.gameManager.RunningAwayFromPlayer(true);
+            if (manager.characterController.animationHandler.CurrentState != AnimationHandler.AnimationState.Running)
+            {
+                manager.characterController.animationHandler.CurrentState = AnimationHandler.AnimationState.Running;
+            }
+        }
+        else if (manager.stateName == "Fleeing" && manager.characterController.gameManager.IsPlayerToCloseToCharacter(manager.characterController.transform, manager.characterController.distanceThresholdOfPlayer))
+        {
+            if (manager.stateName == "Fleeing" && Vector3.Distance(manager.characterController.transform.position, manager.characterController.CurrentTargetPosition) > manager.characterController.minDistanceToTarget)
+            {
+                Vector3 targetPosition = new Vector3(manager.characterController.CurrentTargetPosition.x, manager.characterController.transform.position.y, manager.characterController.CurrentTargetPosition.z); // The positon we want to move towards.
+                Vector3 nextMovePosition = Vector3.MoveTowards(manager.characterController.transform.position, targetPosition, manager.characterController.moveSpeed * Time.deltaTime * 1.5f); // The amount we should move towards that position.
+                manager.characterController.rigidBody.MovePosition(nextMovePosition);
+            }
+            else
+            {
+                manager.characterController.CurrentTargetPosition = manager.characterController.gameManager.ReturnRandomPositionOnField();
+            }
+        }
+        else if (manager.stateName == "Fleeing" && manager.characterController.gameManager.IsPlayerToCloseToCharacter(manager.characterController.transform, manager.characterController.distanceThresholdOfPlayer) == false)
+        {
+            manager.ChangeState("Roaming");
+            manager.characterController.currentTargetPosition = manager.characterController.gameManager.ReturnRandomPositionOnField();
+            manager.characterController.gameManager.RunningAwayFromPlayer(false);
+        }
+    
+    }
 }
 
 public class CharacterController : MonoBehaviour
 {
 
-    /// <summary>
-    /// The different states that our character can be in
-    /// </summary>
-    public enum CharacterStates {Idle, Roaming, Waving, Playing, Fleeing}
-
-    public CharacterStates currentCharacterState; // The current state that our character is in.
-
-
 
     public StateManager stateManager = new StateManager(); // Reference to state manager.
+    public State currentState;
     public GameManager gameManager; // Reference to our game manager.
     public Rigidbody rigidBody; // Reference to our rigidbody.
 
     // Roaming state variables.
-    private Vector3 currentTargetPosition; // The target we are currently heading towards.
-    private Vector3 previousTargetPosition; // The last target we were heading towards.
+    public Vector3 currentTargetPosition; // The target we are currently heading towards.
+    public Vector3 previousTargetPosition; // The last target we were heading towards.
 
     public float moveSpeed = 3; // How fast our character is moving.
     public float minDistanceToTarget = 1; // How close we should get to our target.
 
     // Idle state variables.
     public float idleTime = 2; // Once we reach our target position, how long should we wait till we get another position.
-    private float currentIdleWaitTime; // The time we are waiting till, we can move again.
+    public float currentIdleWaitTime; // The time we are waiting till, we can move again.
 
     // Waving state varaiables.
     public float waveTime = 2; // The time spent waving.
-    private float currentWaveTime; // The current time to wave till.
+    public float currentWaveTime; // The current time to wave till.
     public float distanceToStartWavingFrom = 4f; // The distance that will be checking to see if we are in range to wave at another character.
-    private CharacterController[] allCharactersInScene; // A collection of references to all characters in our scene.
+    public CharacterController[] allCharactersInScene; // A collection of references to all characters in our scene.
     public float timeBetweenWaves = 5; // The time between when we are allowed to wave again.
-    private float currentTimeBetweenWaves; // The current time for our next wave to be iniated.
+    public float currentTimeBetweenWaves; // The current time for our next wave to be iniated.
 
     // Fleeing state variables.
     public float distanceThresholdOfPlayer = 5;// The distance that is "to" close for the player to be to us.
 
 
     // Playing state variables
-    private Transform currentSoccerBall = null; // A reference to the current soccerball.
+    public Transform currentSoccerBall = null; // A reference to the current soccerball.
     public GameObject selfIdentifier; // A reference to our identification colour.
     public GameObject myGoal; // Reference to this characters goal.
     public float soccerBallKickForce = 10; // The amount of force the character can use to kick the ball.
     public float soccerBallInteractDistance = 0.25f;// If the soccerball is close nough, then we can kick it.
     public float passingAnimationDelay = 0.5f; // A delay of the soccer animation before they kick.
-    private float currentTimeTillPassingAnimationPlays; // The time at which the animation will play and we should kick.
+    public float currentTimeTillPassingAnimationPlays; // The time at which the animation will play and we should kick.
 
     public AnimationHandler animationHandler; // A reference to our animation handler script.
 
     /// <summary>
     /// Returns the currentTargetPosition and sets the new current position. 
     /// </summary>
-    private Vector3 CurrentTargetPosition
+    public Vector3 CurrentTargetPosition
     {
         get
         {
@@ -192,7 +317,7 @@ public class CharacterController : MonoBehaviour
         stateManager.characterController = this;
         CurrentTargetPosition = gameManager.ReturnRandomPositionOnField(); // Get a random starting position.
         allCharactersInScene = FindObjectsOfType<CharacterController>(); // Find the references to all characters in our scene.
-        currentCharacterState = CharacterStates.Roaming; // Set the character by default to start roaming.
+        stateManager.stateName = "Roaming"; // Set the character by default to start roaming.
         selfIdentifier.SetActive(false);
         animationHandler.CurrentState = AnimationHandler.AnimationState.Idle; // Set our animation to idle.
     }
@@ -203,6 +328,7 @@ public class CharacterController : MonoBehaviour
         stateManager.Update();
     }
 
+    /*
     /// <summary>
     /// Handles the Roaming state of our character.
     /// </summary>
@@ -263,32 +389,9 @@ public class CharacterController : MonoBehaviour
 
             }
         }
-    }
+    }*/
 
-    /// <summary>
-    /// Handle the idle state of our character.
-    /// </summary>
-    private void HandleIdleState()
-    {
-        if(currentCharacterState == CharacterStates.Idle)
-        {
-            // We must be close enough to our target position.
-            // We wait a couple seconds.
-            // Then find a new position to move to.
-            if (Time.time > currentIdleWaitTime)
-            {
-                // Lets find a new position.
-                CurrentTargetPosition = gameManager.ReturnRandomPositionOnField();
-                currentCharacterState = CharacterStates.Roaming; // Start roaming again.
-            }
-            // When running.
-            if (animationHandler.CurrentState != AnimationHandler.AnimationState.Idle)
-            {
-                animationHandler.CurrentState = AnimationHandler.AnimationState.Idle; // Set our animation to idle animation.
-            }
-        }
-    }
-
+    /*
     /// <summary>
     /// Handles the fleeing state of our character.
     /// </summary>
@@ -329,7 +432,8 @@ public class CharacterController : MonoBehaviour
             gameManager.RunningAwayFromPlayer(false); // Stop fleeing from the player so go back to the original music.
           
         }
-    }
+    }*/
+    /*
 
     /// <summary>
     /// Handles the playing state of our character.
@@ -353,7 +457,8 @@ public class CharacterController : MonoBehaviour
                 currentCharacterState = CharacterStates.Roaming;
             }        
         }
-    }
+    }*/
+    /*
 
     /// <summary>
     /// Handles the waving state.
@@ -380,13 +485,13 @@ public class CharacterController : MonoBehaviour
             currentCharacterState = CharacterStates.Roaming; // Start roaming again.
         }
 
-    }
+    }*/
 
     /// <summary>
     /// Returns a transform if they are in range of the player to be waved at.
     /// </summary>
     /// <returns></returns>
-    private Transform ReturnCharacterTransformToWaveAt()
+    public Transform ReturnCharacterTransformToWaveAt()
     {
         // Looping through all the characters in our scene.
         for(int i = 0; i<allCharactersInScene.Length; i++)
@@ -408,7 +513,7 @@ public class CharacterController : MonoBehaviour
     /// <summary>
     /// Rotates our character to always face the direction we are heading.
     /// </summary>
-    private void LookAtTargetPosition()
+    public void LookAtTargetPosition()
     {
         Vector3 directionToLookAt = CurrentTargetPosition - transform.position; // Get the direction we should be lookin at.
         directionToLookAt.y = 0; // Don't change the Y position.
@@ -431,7 +536,7 @@ public class CharacterController : MonoBehaviour
     {
         currentSoccerBall = SoccerBall; // Assign the soccer ball to our reference.
         CurrentTargetPosition = currentSoccerBall.position; // Set our target position to our soccer ball.
-        currentCharacterState = CharacterStates.Roaming; // Using our roaming state to start moving towards our soccerball.
+        stateManager.stateName = "Roaming"; // Using our roaming state to start moving towards our soccerball.
         selfIdentifier.SetActive(true);
     }
 
