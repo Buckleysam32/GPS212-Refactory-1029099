@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+    public static GameManager Instance { get; private set; } // Establish Singleton.
+
     public Transform soccerField; // A reference to our soccer field.
     public Vector3 moveArea; // The size of our area where we can move.
     public Transform arCamera; // Reference to our AR camera.
@@ -21,6 +23,23 @@ public class GameManager : MonoBehaviour
     public AudioManager audioManager; // Reference to our audio manager.
 
     private bool areCharactersRunningAway = false; // Are there any characters currently running away from the player.
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else if (Instance != this)
+        {
+            Destroy(gameObject);
+        }
+
+        DontDestroyOnLoad(gameObject);
+    }
+
+
+
 
     // Start is called before the first frame update
     void Start()

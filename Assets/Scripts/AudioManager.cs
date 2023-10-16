@@ -5,6 +5,8 @@ using UnityEngine.Video;
 
 public class AudioManager : MonoBehaviour
 {
+    public static AudioManager Instance { get; private set; }
+
     public AudioClip roamingMusic; // The music we will use when roaming.
     public AudioClip playingMusic; // The music we will use whilst they play soccer.
     public AudioClip fleeingMusic; // Play a people screaming sound.
@@ -12,6 +14,20 @@ public class AudioManager : MonoBehaviour
     private AudioClip currentTrack; // The current track being played.
     private AudioClip previousTrack; // The previous track that was played.
     public AudioSource audioSource; // A reference to our audiosource, where the music will be played from.
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else if (Instance != this)
+        {
+            Destroy(gameObject);
+        }
+        DontDestroyOnLoad(gameObject);
+    }
+
 
     /// <summary>
     /// So this gets called everytime the script gets turn off/on.
