@@ -55,6 +55,7 @@ public class StateManager
     }
 
 }
+
 /// <summary>
 /// Character Idle State.
 /// </summary>
@@ -79,6 +80,7 @@ public class StateIdle : State
 
     }
 }
+
 /// <summary>
 /// Character Roaming State.
 /// </summary>
@@ -144,6 +146,7 @@ public class StateRoaming : State
 
     }
 }
+
 /// <summary>
 /// Character Waving State.
 /// </summary>
@@ -173,6 +176,7 @@ public class StateWaving : State
     
     }
 }
+
 /// <summary>
 /// Character Playing State.
 /// </summary>
@@ -200,6 +204,7 @@ public class StatePlaying : State
     
     }
 }
+
 /// <summary>
 /// Character Fleeing State.
 /// </summary>
@@ -279,7 +284,7 @@ public class CharacterController : MonoBehaviour
     public GameObject selfIdentifier; // A reference to our identification colour.
     public GameObject myGoal; // Reference to this characters goal.
     public float soccerBallKickForce = 10; // The amount of force the character can use to kick the ball.
-    public float soccerBallInteractDistance = 0.25f;// If the soccerball is close nough, then we can kick it.
+    public float soccerBallInteractDistance = 0.75f;// If the soccerball is close nough, then we can kick it.
     public float passingAnimationDelay = 0.5f; // A delay of the soccer animation before they kick.
     public float currentTimeTillPassingAnimationPlays; // The time at which the animation will play and we should kick.
 
@@ -320,12 +325,14 @@ public class CharacterController : MonoBehaviour
         stateManager.stateName = "Roaming"; // Set the character by default to start roaming.
         selfIdentifier.SetActive(false);
         animationHandler.CurrentState = AnimationHandler.AnimationState.Idle; // Set our animation to idle.
+        stateManager.ChangeState("Idle");
     }
 
     // Update is called once per frame
     void Update()
     {
         stateManager.Update();
+        LookAtTargetPosition();
     }
 
     /*
