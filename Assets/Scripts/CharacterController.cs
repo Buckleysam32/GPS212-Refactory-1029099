@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 using UnityEngine.UIElements;
 using static CharacterController;
 
@@ -335,164 +336,6 @@ public class CharacterController : MonoBehaviour
         LookAtTargetPosition();
     }
 
-    /*
-    /// <summary>
-    /// Handles the Roaming state of our character.
-    /// </summary>
-    private void HandleRoamingState()
-    {
-        float distanceToTarget = 0;
-
-        if (currentSoccerBall != null)
-        {
-            distanceToTarget = soccerBallInteractDistance;
-        }
-        else
-        {
-            distanceToTarget = minDistanceToTarget;
-        }
-
-        /// If we are still too far away move closer.
-        if (currentCharacterState == CharacterStates.Roaming && Vector3.Distance(transform.position, CurrentTargetPosition) > distanceToTarget)
-        {
-            if(currentSoccerBall != null)
-            {
-                // When running.
-                if (animationHandler.CurrentState != AnimationHandler.AnimationState.Running)
-                {
-                    animationHandler.CurrentState = AnimationHandler.AnimationState.Running; // Set our animation to running animation.
-                }
-
-                CurrentTargetPosition = currentSoccerBall.position;
-                Vector3 targetPosition = new Vector3(CurrentTargetPosition.x, transform.position.y, CurrentTargetPosition.z); // The positon we want to move towards.
-                Vector3 nextMovePosition = Vector3.MoveTowards(transform.position, targetPosition, moveSpeed * Time.deltaTime * 1.5f); // The amount we should move towards that position.
-                rigidBody.MovePosition(nextMovePosition);
-                currentIdleWaitTime = Time.time + idleTime;
-            }
-            else
-            {
-                // When walking.
-                if (animationHandler.CurrentState != AnimationHandler.AnimationState.Walking)
-                {
-                    animationHandler.CurrentState = AnimationHandler.AnimationState.Walking; // Set our animation to walking animation.
-                }
-                Vector3 targetPosition = new Vector3(CurrentTargetPosition.x, transform.position.y, CurrentTargetPosition.z); // The positon we want to move towards.
-                Vector3 nextMovePosition = Vector3.MoveTowards(transform.position, targetPosition, moveSpeed * Time.deltaTime); // The amount we should move towards that position.
-                rigidBody.MovePosition(nextMovePosition);
-                currentIdleWaitTime = Time.time + idleTime;
-            }
-          
-        }
-        else if (currentCharacterState == CharacterStates.Roaming) // So check to see if we're roaming.
-        {
-            if (currentSoccerBall != null)
-            {
-                currentCharacterState = CharacterStates.Playing; // Start playing with the ball.
-                currentTimeTillPassingAnimationPlays = Time.time + passingAnimationDelay; // Sets the time to wait till until we play the animation.
-            }
-            else
-            {
-                currentCharacterState = CharacterStates.Idle; // Start idling.
-
-            }
-        }
-    }*/
-
-    /*
-    /// <summary>
-    /// Handles the fleeing state of our character.
-    /// </summary>
-    private void HandleFleeingState()
-    {
-        if (currentCharacterState != CharacterStates.Fleeing && gameManager.IsPlayerToCloseToCharacter(transform, distanceThresholdOfPlayer))
-        {
-            // When fleeing.
-            currentCharacterState = CharacterStates.Fleeing;
-            gameManager.RunningAwayFromPlayer(true); // We are fleeing from the player play our music.
-            // When running.
-            if (animationHandler.CurrentState != AnimationHandler.AnimationState.Running)
-            {
-                animationHandler.CurrentState = AnimationHandler.AnimationState.Running; // Set our animation to running animation.
-            }
-
-        }
-        else if (currentCharacterState == CharacterStates.Fleeing && gameManager.IsPlayerToCloseToCharacter(transform, distanceThresholdOfPlayer))
-        {
-            // If we are still too far away move closer.
-            if (currentCharacterState == CharacterStates.Fleeing && Vector3.Distance(transform.position, CurrentTargetPosition) > minDistanceToTarget)
-            {
-                Vector3 targetPosition = new Vector3(CurrentTargetPosition.x, transform.position.y, CurrentTargetPosition.z); // The positon we want to move towards.
-                Vector3 nextMovePosition = Vector3.MoveTowards(transform.position, targetPosition, moveSpeed * Time.deltaTime * 1.5f); // The amount we should move towards that position.
-                rigidBody.MovePosition(nextMovePosition);
-            }
-            else
-            {
-                CurrentTargetPosition = gameManager.ReturnRandomPositionOnField();
-            }
-
-        }
-        else if (currentCharacterState == CharacterStates.Fleeing && gameManager.IsPlayerToCloseToCharacter(transform, distanceThresholdOfPlayer) == false)
-        {
-            // If we are still fleeing, then we want to transition back to our roaming state.
-            currentCharacterState = CharacterStates.Roaming;
-            CurrentTargetPosition = gameManager.ReturnRandomPositionOnField();
-            gameManager.RunningAwayFromPlayer(false); // Stop fleeing from the player so go back to the original music.
-          
-        }
-    }*/
-    /*
-
-    /// <summary>
-    /// Handles the playing state of our character.
-    /// </summary>
-    private void HandlePlayingState()
-    {
-        // We want to kick the ball cause are close enough.
-        if(currentCharacterState == CharacterStates.Playing)
-        {
-            // Here would should be running.
-            if (animationHandler.CurrentState != AnimationHandler.AnimationState.Passing)
-            {
-                animationHandler.CurrentState = AnimationHandler.AnimationState.Passing; // Set our animation to running animation.
-            }
-
-            if (Time.time > currentTimeTillPassingAnimationPlays)
-            {
-                KickSoccerBall(); // Kick our ball.
-                // Set our target to the soccer ball again, and start moving towards the ball again.
-                CurrentTargetPosition = currentSoccerBall.position; 
-                currentCharacterState = CharacterStates.Roaming;
-            }        
-        }
-    }*/
-    /*
-
-    /// <summary>
-    /// Handles the waving state.
-    /// </summary>
-    private void HandleWavingState()
-    {
-        if (ReturnCharacterTransformToWaveAt() != null && currentCharacterState != CharacterStates.Waving && Time.time > currentTimeBetweenWaves && currentCharacterState != CharacterStates.Fleeing && currentSoccerBall == null)
-        {
-            // We should start waving.
-            currentCharacterState = CharacterStates.Waving;
-            currentWaveTime = Time.time + waveTime; // Set up the time we should be waving till.
-            CurrentTargetPosition = ReturnCharacterTransformToWaveAt().position; // Set the current target position  to the closest transform, so that way we also rotate towards it.
-            // Here would should be Waving.
-            if (animationHandler.CurrentState != AnimationHandler.AnimationState.Waving)
-            {
-                animationHandler.CurrentState = AnimationHandler.AnimationState.Waving; // Set our animation to waving animation.
-            }
-        }
-        if (currentCharacterState == CharacterStates.Waving && Time.time > currentWaveTime)
-        {
-            // Stop waving.
-            CurrentTargetPosition = previousTargetPosition; // Resume moving towards our random target position.
-            currentTimeBetweenWaves = Time.time + timeBetweenWaves; // Set the next time for when we can wave again.
-            currentCharacterState = CharacterStates.Roaming; // Start roaming again.
-        }
-
-    }*/
 
     /// <summary>
     /// Returns a transform if they are in range of the player to be waved at.
@@ -557,3 +400,5 @@ public class CharacterController : MonoBehaviour
     }
 
 }
+
+
